@@ -1,106 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Personal Vault</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      background:#0f0f0f;
-      color:white;
-      font-family:sans-serif;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      height:100vh;
-      margin:0;
-    }
-    .box {
-      background:#161616;
-      padding:25px;
-      border-radius:12px;
-      width:100%;
-      max-width:360px;
-    }
-    input, button {
-      width:100%;
-      padding:12px;
-      margin-top:10px;
-      border:none;
-      border-radius:8px;
-    }
-    button {
-      background:#4f46e5;
-      color:white;
-      font-weight:bold;
-    }
-    .hidden { display:none; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault Login</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+/* Toast notification styles */
+.toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  min-width: 220px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+.toast.show { opacity: 1; pointer-events: auto; }
+.toast.success { background-color: #4ade80; } /* green */
+.toast.error { background-color: #f87171; }   /* red */
+
+/* Input focus glow */
+input:focus {
+  outline: none;
+  border-color: #3b82f6; /* Tailwind blue-500 */
+  box-shadow: 0 0 6px rgba(59,130,246,0.6);
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+</style>
 </head>
-<body>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
 
-<div class="box" id="loginBox">
-  <h2>🔐 Vault Login</h2>
-  <input id="emailInput" type="email" placeholder="Email">
-  <input id="passwordInput" type="password" placeholder="Password">
-  <button id="loginBtn">Login</button>
-</div>
-
-<div class="box hidden" id="vaultBox">
-  <h2>🗄️ Vault</h2>
-  <p>Access granted</p>
-  <button id="logoutBtn">Logout</button>
-</div>
+<div id="app" class="w-full max-w-sm"></div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import {
-    getAuth,
-    signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDGECXwnnx43lbwpTO5soawj43_W4H2DWg",
-    authDomain: "personal-vault-ba07f.firebaseapp.com",
-    projectId: "personal-vault-ba07f",
-    appId: "1:724145628322:web:e17afbcc37cd567776a3fb"
-  };
+// Firebase config
+const firebaseConfig={
+  apiKey:"AIzaSyDGECXwnnx43lbwpTO5soawj43_W4H2DWg",
+  authDomain:"personal-vault-ba07f.firebaseapp.com",
+  projectId:"personal-vault-ba07f",
+  appId:"1:724145628322:web:e17afbcc37cd567776a3fb"
+};
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
+const appDiv=document.getElementById("app");
 
-  const loginBox = document.getElementById("loginBox");
-  const vaultBox = document.getElementById("vaultBox");
-  const emailInput = document.getElementById("emailInput");
-  const passwordInput = document.getElementById("passwordInput");
+// Toast helper function
+function showToast(message,type="success"){
+  const toast=document.createElement("div");
+  toast.className=`toast ${type} show`;
+  toast.textContent=message;
+  document.body.appendChild(toast);
+  setTimeout(()=>{ toast.classList.remove("show"); toast.style.opacity="0"; },2500);
+  setTimeout(()=>{ toast.remove(); },3000);
+}
 
-  document.getElementById("loginBtn").addEventListener("click", async () => {
-    try {
-      await signInWithEmailAndPassword(
-        auth,
-        emailInput.value,
-        passwordInput.value
-      );
-    } catch (err) {
-      alert(err.message);
-    }
-  });
+// LOGIN BOX
+const loginBox=document.createElement("div");
+loginBox.className="bg-white rounded-xl shadow-xl p-8";
+loginBox.innerHTML=`
+<h2 class="text-2xl font-bold text-center mb-6">Vault Login</h2>
+<input id="emailInput" type="email" placeholder="Email" class="border border-gray-300 rounded-lg w-full p-3 mb-4">
+<input id="passwordInput" type="password" placeholder="Password" class="border border-gray-300 rounded-lg w-full p-3 mb-4">
+<button id="loginBtn" class="bg-indigo-600 w-full p-3 rounded-lg font-bold text-white hover:bg-indigo-700 transition">Login</button>
+`;
+appDiv.appendChild(loginBox);
 
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    signOut(auth);
-  });
+// VAULT BOX
+const vaultBox=document.createElement("div");
+vaultBox.className="bg-white rounded-xl shadow-xl p-8 hidden";
+vaultBox.innerHTML=`
+<h2 class="text-2xl font-bold text-center mb-4">Vault</h2>
+<p class="text-center mb-6">Access granted</p>
+<button id="logoutBtn" class="bg-red-600 w-full p-3 rounded-lg font-bold text-white hover:bg-red-700 transition">Logout</button>
+`;
+appDiv.appendChild(vaultBox);
 
-  onAuthStateChanged(auth, user => {
-    if (user) {
-      loginBox.classList.add("hidden");
-      vaultBox.classList.remove("hidden");
-    } else {
-      vaultBox.classList.add("hidden");
-      loginBox.classList.remove("hidden");
-    }
-  });
+const emailInput=document.getElementById("emailInput");
+const passwordInput=document.getElementById("passwordInput");
+
+// LOGIN EVENT
+document.getElementById("loginBtn").addEventListener("click",async()=>{
+  try{
+    await signInWithEmailAndPassword(auth,emailInput.value,passwordInput.value);
+    showToast("Logged in successfully","success");
+  }catch(e){
+    showToast("Incorrect email or password","error");
+  }
+});
+
+// LOGOUT EVENT
+document.getElementById("logoutBtn").addEventListener("click",()=>{
+  signOut(auth);
+  showToast("Logged out","success");
+});
+
+// AUTH STATE
+onAuthStateChanged(auth,user=>{
+  loginBox.classList.toggle("hidden",!!user);
+  vaultBox.classList.toggle("hidden",!user);
+});
 </script>
 
 </body>
